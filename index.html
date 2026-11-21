@@ -92,6 +92,33 @@ main{max-width:1400px;margin:0 auto;padding:20px;display:flex;flex-direction:col
 .tp .d{text-align:right}.tp b{text-align:right;font-weight:600}.tp .p{color:var(--tinta-3)}
 .vazio{color:var(--tinta-3);padding:12px 0}
 .pe{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;color:var(--tinta-3);font-size:12.5px}
+/* ---------- vendas por grupo ---------- */
+.gv-sub{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.gv-sub select{min-height:44px;flex:1 1 320px;min-width:0;max-width:560px;padding:0 10px;border:1px solid #8FA1A5;border-radius:8px;font:inherit;font-size:14px;color:var(--tinta);background:#fff}
+.gv-res{padding:10px 12px;background:#F4F8F8;border-radius:8px;color:var(--tinta-2);font-size:13.5px}
+.gv-res b{color:var(--petro)}.gv-res .ab{color:#1f7a3d;font-weight:700}
+.gv-corpo{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:24px;align-items:start}
+.gv-pizza{display:flex;flex-direction:column;align-items:center;gap:12px}
+.gv-pizza svg{width:100%;max-width:240px;height:auto}
+.gv-leg{width:100%;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.gv-leg div{display:flex;align-items:center;gap:8px}.gv-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gv-leg b{font-weight:600;color:var(--tinta-2)}
+.gv-q{display:inline-block;flex:0 0 12px;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.gv-tit{font-weight:600;font-size:15px;margin-bottom:6px}.gv-tit a{color:var(--petro-1);cursor:pointer;text-decoration:underline}
+.gv-rol{overflow-x:auto;max-width:100%}
+.gv-tab{width:100%;border-collapse:collapse;font-size:14px}
+.gv-tab th{font-size:12px;color:var(--tinta-3);font-weight:600;text-align:right;padding:8px;border-bottom:1px solid var(--linha);white-space:nowrap}
+.gv-tab td{padding:10px 8px;border-bottom:1px solid #F0EBE7;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gv-tab th:first-child,.gv-tab td:first-child{text-align:left;white-space:normal}
+.gv-tab tfoot td{font-weight:700;border-top:2px solid var(--linha);border-bottom:0}
+.gv-tab tr[data-gg]{cursor:pointer}.gv-tab tr[data-gg]:hover td{background:#F4F8F8}
+.gv-tab .pos{color:#1f7a3d}.gv-tab .neg{color:var(--ruim)}
+.gv-tab td small{display:none}
+.gv-nota{color:var(--tinta-3);font-size:12.5px;margin:0}
+@media (max-width:820px){
+  .gv-corpo{grid-template-columns:1fr;gap:14px}
+  .gv-tab .gv-pc{display:none}.gv-tab td small{display:block;color:var(--tinta-3);font-size:12px;font-weight:400;white-space:normal}
+  .gv-tab{font-size:13.5px}.gv-tab td{padding:9px 5px}
+}
 nav.abas{display:none}
 .so-cel{display:none}
 @media (max-width:820px){
@@ -135,6 +162,7 @@ nav.abas{display:none}
     <ul>
       <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#E2C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 7.5 13.5 14.5 5"/></svg><span>Vendas de hoje, do mês e dos últimos 12 meses</span></li>
       <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#E2C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 7.5 13.5 14.5 5"/></svg><span>Formas de pagamento, produtos mais vendidos e despesas</span></li>
+      <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#E2C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 7.5 13.5 14.5 5"/></svg><span>Vendas por grupo e produto, por caixa, dia, semana, quinzena ou mês</span></li>
       <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#E2C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 7.5 13.5 14.5 5"/></svg><span>Contas a receber e a pagar, com o que está vencido</span></li>
     </ul>
   </div>
@@ -197,7 +225,7 @@ const dm = d => String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth()
 const hm = d => String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
 
 let D = null, QUANDO = null, AGORA = null, relogio = null;
-const E = { aba: "resumo", modo: "30d", sel: null, sel7: null, forma: "hoje", prod: "30d" };
+const E = { aba: "resumo", modo: "30d", sel: null, sel7: null, forma: "hoje", prod: "30d", gm: null, gp: "0", gcx: null, gg: null };
 
 /* ---------------- entrada ---------------- */
 function mostraEntrar(msg) {
@@ -261,6 +289,72 @@ function faixas(lista, nome) {
   const itens = (lista || []).map(x => ({ nome: x[nome], v: n(x.valor) })).filter(x => x.v), tot = itens.reduce((a, x) => a + x.v, 0), max = Math.max(1, ...itens.map(x => x.v));
   return { tot, html: itens.length ? `<div class="fx">${itens.map(x => `<div class="f"><div><span>${esc(x.nome || "—")}</span><span class="num">${brl(x.v)} <em>· ${pc(x.v / tot)}</em></span></div><div class="tr"><i style="width:${Math.max(2, x.v / max * 100).toFixed(1)}%"></i></div></div>`).join("")}</div>` : `<div class="vazio">Nada neste período.</div>` };
 }
+/* ---------------- vendas por grupo (por caixa, dia, semana, quinzena ou mês) ---------------- */
+const COR_T = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"], COR_OUT = "#b4b2a9";
+const dBRa = s => s ? s.slice(8, 10) + "/" + s.slice(5, 7) + "/" + s.slice(0, 4) : "";
+const pcx = (a, b) => b ? pc(a / b) : "—";
+function pizza(itens, total, centro) {
+  if (!itens.length || total <= 0) return "";
+  const t = 240, r = t / 2, ri = r * 0.58, pt = (rad, a) => [(r + rad * Math.cos(a)).toFixed(2), (r + rad * Math.sin(a)).toFixed(2)];
+  let a0 = -Math.PI / 2, out = "";
+  for (const it of itens) {
+    const fr = it.v / total; if (fr <= 0) continue;
+    const a1 = a0 + fr * Math.PI * 2 - (fr >= 1 ? 1e-4 : 0), g = fr > 0.5 ? 1 : 0;
+    const [x0, y0] = pt(r - 1, a0), [x1, y1] = pt(r - 1, a1), [x2, y2] = pt(ri, a1), [x3, y3] = pt(ri, a0);
+    out += `<path d="M${x0} ${y0}A${r - 1} ${r - 1} 0 ${g} 1 ${x1} ${y1}L${x2} ${y2}A${ri} ${ri} 0 ${g} 0 ${x3} ${y3}Z" fill="${it.cor}" stroke="#fff" stroke-width="2"${it.k != null ? ` data-gg="${esc(it.k)}" style="cursor:pointer"` : ""}><title>${esc(it.rot)}: ${brl(it.v)} (${pcx(it.v, total)})</title></path>`;
+    a0 = a1;
+  }
+  return `<svg viewBox="0 0 ${t} ${t}" role="img" aria-label="${esc(centro)}">${out}<text x="${r}" y="${r - 6}" text-anchor="middle" font-size="12.5" fill="#52686D">${esc(centro.length > 20 ? centro.slice(0, 19) + "…" : centro)}</text><text x="${r}" y="${r + 16}" text-anchor="middle" font-size="16" font-weight="700" fill="#042D35">${brl(total)}</text></svg>`;
+}
+function gvCartao() {
+  const V = D.vendas_grupo;
+  if (!V || !Array.isArray(V.periodos)) return "";
+  const P = V.produtos || [], G = V.grupos || {}, cxs = V.caixas || [];
+  if (!E.gm || (E.gm === "caixa" && !cxs.length)) E.gm = cxs.length ? "caixa" : "dia";
+  const modos = [["caixa", "Caixa"], ["dia", "Dia"], ["semana", "Semana"], ["quinzena", "Quinzena"], ["mes", "Mês"]].filter(o => o[0] !== "caixa" || cxs.length);
+  let X, sub, res;
+  if (E.gm === "caixa") {
+    if (!cxs.some(c => c.id === E.gcx)) E.gcx = cxs[0].id;
+    X = cxs.find(c => c.id === E.gcx);
+    const rc = c => `Nº ${c.id} · ${c.equipamento} · ${dBRa(c.abertura).slice(0, 5)} ${c.abertura.slice(11)}` + (c.status === "ABERTO" ? " · ABERTO" : " → " + (c.fechamento.slice(0, 10) === c.abertura.slice(0, 10) ? "" : dBRa(c.fechamento).slice(0, 5) + " ") + c.fechamento.slice(11));
+    sub = `<div class="gv-sub"><select data-gcx aria-label="Caixa">${cxs.map(c => `<option value="${c.id}"${c.id === E.gcx ? " selected" : ""}>${esc(rc(c))}</option>`).join("")}</select></div>`;
+    res = `<b>Caixa nº ${X.id}</b> — ${esc(X.equipamento)} — aberto em ${dBRa(X.abertura)} ${X.abertura.slice(11)} — ` + (X.status === "ABERTO" ? `<span class="ab">ainda aberto</span>` : `fechado em ${dBRa(X.fechamento)} ${X.fechamento.slice(11)}`);
+  } else {
+    const ps = V.periodos.filter(p => p.k === E.gm);
+    if (!ps.length) return "";
+    const i = Math.min(Number(E.gp) || 0, ps.length - 1); X = ps[i];
+    sub = ps.length > 1 ? `<div class="gv-sub">${seg("gp", ps.map((p, k) => [String(k), p.rot]), String(i))}</div>` : "";
+    res = `<b>${esc(X.rot)}</b> — ${X.de === X.ate ? dBRa(X.de) : dBRa(X.de) + " a " + dBRa(X.ate)}`;
+  }
+  res += ` · ${qt(X.qtd)} ${n(X.qtd) === 1 ? "venda" : "vendas"}`;
+  const grupos = (X.g || []).map((g, k) => ({ k: String(g[0]), rot: G[String(g[0])] || "Grupo " + g[0], v: n(g[1]), c: n(g[2]), its: g[3] || [], cor: k < 8 ? COR_T[k] : COR_OUT }));
+  const TV = grupos.reduce((a, g) => a + g.v, 0), TC = grupos.reduce((a, g) => a + g.c, 0), dif = n(X.fat) - TV;
+  const sel = grupos.find(g => g.k === E.gg) || null; if (!sel) E.gg = null;
+  const luc = v => `<td class="${v < 0 ? "neg" : "pos"}">${brl(v)}</td>`;
+  const fat7 = (lista, tot, click) => { const top = lista.slice(0, 7), r = lista.slice(7), o = top.map((x, k) => ({ k: click ? x.k : null, rot: x.rot, v: x.v, cor: x.cor || COR_T[k] }));
+    if (r.length) o.push({ k: null, rot: `Outros (${r.length})`, v: r.reduce((a, x) => a + x.v, 0), cor: COR_OUT }); return o; };
+  let tit, cab, corpo, pe, fat, tot;
+  if (sel) {
+    const prods = sel.its.map((x, k) => ({ rot: x[0] < 0 ? `Outros (${-x[0]} produtos)` : (P[x[0]] || "—"), q: n(x[1]), v: n(x[2]), c: n(x[3]), out: x[0] < 0 })).map((x, k) => Object.assign(x, { cor: x.out ? COR_OUT : (k < 7 ? COR_T[k] : COR_OUT) }));
+    tot = sel.v; fat = fat7(prods.filter(x => !x.out), tot, false); const o = prods.find(x => x.out); if (o) fat.push({ k: null, rot: o.rot, v: o.v, cor: COR_OUT });
+    tit = `<a data-gvolta tabindex="0">Todos os grupos</a> › ${esc(sel.rot)}`;
+    cab = `<tr><th>Produto</th><th>Qtd.</th><th>Vendido</th><th class="gv-pc">Custo</th><th>Lucro</th></tr>`;
+    corpo = prods.map(x => `<tr><td><i class="gv-q" style="background:${x.cor}"></i>${esc(x.rot)}<small>Custo ${brl(x.c)}</small></td><td>${qt(x.q)}</td><td>${brl(x.v)}</td><td class="gv-pc">${brl(x.c)}</td>${luc(x.v - x.c)}</tr>`).join("");
+    pe = `<tr><td>Total do grupo</td><td>${qt(prods.reduce((a, x) => a + x.q, 0))}</td><td>${brl(sel.v)}</td><td class="gv-pc">${brl(sel.c)}</td>${luc(sel.v - sel.c)}</tr>`;
+  } else {
+    tot = TV; fat = fat7(grupos, tot, true);
+    tit = `Todos os grupos <small style="font-weight:400;color:var(--tinta-3)">· toque num grupo para ver os produtos</small>`;
+    cab = `<tr><th>Grupo</th><th>Vendido</th><th class="gv-pc">Custo</th><th>Lucro</th><th class="gv-pc">Margem</th></tr>`;
+    corpo = grupos.map(g => `<tr data-gg="${esc(g.k)}" tabindex="0"><td><i class="gv-q" style="background:${g.cor}"></i>${esc(g.rot)}<small>Custo ${brl(g.c)} · margem ${pcx(g.v - g.c, g.v)}</small></td><td>${brl(g.v)}</td><td class="gv-pc">${brl(g.c)}</td>${luc(g.v - g.c)}<td class="gv-pc">${pcx(g.v - g.c, g.v)}</td></tr>`).join("");
+    pe = `<tr><td>Total</td><td>${brl(TV)}</td><td class="gv-pc">${brl(TC)}</td>${luc(TV - TC)}<td class="gv-pc">${pcx(TV - TC, TV)}</td></tr>`;
+  }
+  const corpoHtml = grupos.length ? `<div class="gv-corpo"><div class="gv-pizza">${pizza(fat, tot, sel ? sel.rot : "Vendido")}<div class="gv-leg">${fat.map(x => `<div><i class="gv-q" style="background:${x.cor}"></i><span>${esc(x.rot)}</span><b class="num">${pcx(x.v, tot)}</b></div>`).join("")}</div></div>
+      <div><div class="gv-tit">${tit}</div><div class="gv-rol"><table class="gv-tab"><thead>${cab}</thead><tbody>${corpo}</tbody><tfoot>${pe}</tfoot></table></div>
+      ${!sel && Math.abs(dif) >= 0.01 ? `<p class="gv-nota" style="margin-top:8px">${dif < 0 ? "Descontos" : "Acréscimos"} dados no total da venda (sem produto): <b>${brl(Math.abs(dif))}</b>. Por isso o total vendido é ${brl(n(X.fat))}.</p>` : ""}</div></div>`
+    : `<div class="vazio">Nenhuma venda ${E.gm === "caixa" ? "neste caixa" : "neste período"}.</div>`;
+  return `<section class="card" data-aba="prod" id="gv"><div class="ch"><div><h2>Vendas por grupo</h2><small>Vendido, custo e lucro de cada grupo e dos seus produtos</small></div>${seg("gm", modos, E.gm)}</div>
+    ${sub}<div class="gv-res">${res}</div>${corpoHtml}</section>`;
+}
 function desenha() {
   document.body.dataset.a = E.aba;
   $$("nav.abas button").forEach(b => b.classList.toggle("on", b.dataset.ir === E.aba));
@@ -319,6 +413,7 @@ function desenha() {
       ${top.length ? top.map((t, i) => `<div class="tp"><span class="p num">${i + 1}</span><span class="n"><span>${esc(t.produto)}</span><small class="num">Qtd. ${qt(t.qtd)}</small><div class="tr" style="height:4px;margin-top:5px"><i style="height:4px;width:${Math.max(2, n(t.total) / pMax * 100).toFixed(1)}%"></i></div></span><span class="d num">${qt(t.qtd)}</span><b class="num">${brl(t.total)}</b></div>`).join("") : `<div class="vazio">Nenhuma venda neste período.</div>`}</section>
     <section class="card g1" data-aba="fin" style="flex-grow:2"><div class="ch"><h2>Despesas pagas no mês</h2><b class="num">${brl(desp.tot)}</b></div>${desp.html}</section>
   </div>
+  ${gvCartao()}
   <div class="trio">
     <section class="card" data-aba="fin"><h2 style="font-size:18px">Contas a receber</h2>
       <div class="par"><span>Em aberto</span><b class="num">${brl(rec.aberto)}</b></div>
@@ -335,7 +430,11 @@ function desenha() {
       <div class="par"><span>Clientes cadastrados</span><b class="num">${qt(D.clientes)}</b></div></section>
   </div>
   <footer class="pe"><span>Este painel mostra somente os totais da sua empresa. Nomes e dados dos seus clientes não saem do seu servidor.</span><span>S.W.W.S — Secure Workflow Solutions · Suporte pelo WhatsApp (18) 99140-6153</span></footer>`;
-  $$("[data-seg]", m).forEach(b => b.onclick = () => { E[b.dataset.seg] = b.dataset.v; if (b.dataset.seg === "modo") E.sel = null; desenha(); });
+  $$("[data-seg]", m).forEach(b => b.onclick = () => { E[b.dataset.seg] = b.dataset.v; if (b.dataset.seg === "modo") E.sel = null;
+    if (b.dataset.seg === "gm") { E.gp = "0"; E.gg = null; } if (b.dataset.seg === "gp") E.gg = null; desenha(); });
+  $$("[data-gg]", m).forEach(t => { const f = () => { E.gg = t.dataset.gg; desenha(); }; t.addEventListener("click", f); t.addEventListener("keydown", ev => { if (ev.key === "Enter") f(); }); });
+  $$("[data-gvolta]", m).forEach(a => { const f = () => { E.gg = null; desenha(); }; a.onclick = f; a.onkeydown = ev => { if (ev.key === "Enter") f(); }; });
+  $$("[data-gcx]", m).forEach(sl => sl.onchange = () => { E.gcx = Number(sl.value); E.gg = null; desenha(); });
   $$("[data-b]", m).forEach(b => b.onclick = () => { E[b.dataset.b] = Number(b.dataset.i); desenha(); });
 }
 
