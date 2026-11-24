@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://zfupbpazebjzxglthzfl.supabase.co; base-uri 'none'; form-action 'none'">
+<title>S.W.W.S · Fotos</title><style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#042D35;color:#F4F1EC;font-family:-apple-system,"Segoe UI",Roboto,"Source Sans 3",Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;display:flex;flex-direction:column}
+header{padding:18px 18px 14px;border-bottom:2px solid #C9A44C}
+.marca{font-family:Georgia,serif;font-weight:700;color:#C9A44C;letter-spacing:1px;font-size:14px}
+h1{margin:6px 0 8px;font-size:21px;line-height:1.2}
+.veic{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:15px;color:#D6E2E1}
+.placa{background:#fff;color:#042D35;font-weight:700;font-size:14px;padding:1px 8px;border-radius:3px;border-top:4px solid #1F4FA3}
+main{flex:1;padding:18px}
+h2{margin:0 0 6px;font-size:19px}
+p{margin:0 0 10px;line-height:1.4}
+.fraco{color:#B9CBCA;font-size:14px}
+.nomes{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.nome{display:flex;align-items:center;gap:14px;min-height:58px;padding:0 16px;background:#0A3A43;color:#F4F1EC;border:1px solid #2A5961;border-radius:10px;font-size:17px;font-weight:600;text-align:left;width:100%}
+.nome span{flex:none;width:34px;height:34px;border-radius:17px;background:#C9A44C;color:#042D35;display:flex;align-items:center;justify-content:center;font-weight:700}
+.quem{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;font-size:15px;color:#D6E2E1}
+.link{background:none;border:0;color:#E2C77E;font-weight:600;font-size:15px;padding:8px 0;text-decoration:underline}
+.rot{font-size:14px;font-weight:600;color:#B9CBCA;margin:0 0 8px}
+.moms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:16px}
+.mom{min-height:44px;background:#0A3A43;color:#F4F1EC;border:1px solid #2A5961;border-radius:8px;font-size:15px;font-weight:600;padding:4px 6px}
+.mom.sel{background:#C9A44C;color:#042D35;border-color:#C9A44C;font-weight:700}
+.grande{display:flex;align-items:center;justify-content:center;gap:12px;min-height:76px;background:#C9A44C;color:#042D35;border-radius:12px;font-size:21px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.media{display:flex;align-items:center;justify-content:center;min-height:48px;border:1px solid #2A5961;color:#E2C77E;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:16px}
+input[type=file]{display:none}
+label.campo{display:block}
+input[type=text]{width:100%;min-height:46px;padding:0 12px;background:#072C33;color:#F4F1EC;border:1px solid #2A5961;border-radius:8px;font-size:16px}
+.lista{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.item{display:flex;gap:12px;align-items:center;background:#0A3A43;border-radius:10px;padding:8px}
+.item img,.item .sem{flex:none;width:56px;height:56px;border-radius:6px;object-fit:cover;background:#24515A}
+.item .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.item b{font-size:15px}
+.barra{height:6px;background:#072C33;border-radius:3px;overflow:hidden}
+.barra i{display:block;height:6px;background:#C9A44C;width:0}
+.ok{color:#8FE0A6;font-size:13px}
+.esp{color:#B9CBCA;font-size:13px}
+.err{color:#FFB4A8;font-size:13px}
+.aviso{background:#5A1F1A;border:1px solid #C9705F;border-radius:10px;padding:14px;margin-bottom:14px}
+footer{padding:12px 18px 18px;border-top:1px solid #2A5961;font-size:13px;color:#B9CBCA;display:flex;align-items:center;gap:8px}
+footer i{width:9px;height:9px;border-radius:5px;background:#6FD08C;flex:none}
+footer.off i{background:#E0A050}
+[hidden]{display:none!important}
+</style></head>
+<body>
+<header>
+  <div class="marca">S.W.W.S</div>
+  <h1 id="titulo"></h1>
+  <div class="veic"><span class="placa" id="placa" hidden></span><span id="veic"></span></div>
+</header>
+<main>
+  <div class="aviso" id="vencido" hidden><b>Este código não vale mais.</b><br><span id="vencidoTxt">O documento foi
+    fechado no computador. Abra de novo e gere outro QR em «Fotos pelo celular».</span></div>
+  <p class="fraco" id="carregando" hidden>Abrindo…</p>
+  <section id="quem" hidden>
+    <h2>Quem está tirando as fotos?</h2>
+    <p class="fraco">A foto fica registrada com o seu nome e a hora.</p>
+    <div class="nomes" id="nomes"></div>
+  </section>
+  <section id="fotos" hidden>
+    <div class="quem" id="linhaQuem"><span id="mecNome"></span><button type="button" class="link" id="trocar">trocar</button></div>
+    <div class="rot">Momento das fotos</div>
+    <div class="moms" id="moms"></div>
+    <label class="grande"><input type="file" id="cam" accept="image/*" capture="environment">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>
+      Tirar foto</label>
+    <label class="media"><input type="file" id="gal" accept="image/*" multiple>Escolher da galeria</label>
+    <label class="campo"><div class="rot">Legenda da próxima foto (opcional)</div>
+      <input type="text" id="leg" maxlength="200" placeholder="Ex.: vazamento no cárter" autocomplete="off"></label>
+    <div class="rot" id="cont" style="margin-top:18px"></div>
+    <div class="lista" id="lista"></div>
+  </section>
+</main>
+<footer id="rodape"><i></i><span id="estado"></span></footer>
+<script>window.SWWS = {"modo": "nuvem", "api": "https://zfupbpazebjzxglthzfl.supabase.co", "key": "sb_publishable_Llz1O388RBu73goHRY5GLA_bxG6A2_H"};</script>
+<script>
+(function(){
+var W = window.SWWS || {modo: 'local'};
+var NUVEM = W.modo === 'nuvem';
+var $ = function(id){ return document.getElementById(id); };
+var C = null, tok = '', base = location.pathname.replace(/\/+$/, '');
+var mec = 0, mecNome = '', mom = '', vencido = false, enviando = false, cont = 0, fila = [];
+var pendentes = null, tPing = null;
+var guarda = 'swws_mec';
+var TAM = 270000;                    /* pedaço da foto pela internet (bytes) */
+var LADO = NUVEM ? 1600 : 2048;      /* a foto é reduzida no celular */
+
+function ler(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function gravar(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+function hora(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+
+/* ------------------------------------------------------------ internet: chamada à nuvem */
+function rpc(fn, corpo, cb){
+  var x = new XMLHttpRequest();
+  x.open('POST', W.api + '/rest/v1/rpc/' + fn, true);
+  x.timeout = 90000;
+  x.setRequestHeader('Content-Type', 'application/json');
+  x.setRequestHeader('apikey', W.key);
+  if (W.key.indexOf('eyJ') === 0) x.setRequestHeader('Authorization', 'Bearer ' + W.key);   /* só a chave antiga (JWT) */
+  x.onload = function(){ var r = {}; try { r = JSON.parse(x.responseText || '{}'); } catch(e){} cb(x.status, r || {}); };
+  x.onerror = x.ontimeout = function(){ cb(0, {}); };
+  x.send(JSON.stringify(corpo));
+}
+
+/* ------------------------------------------------------------ início */
+function comecar(){
+  $('titulo').textContent = C.titulo || 'Fotos';
+  if (C.placa) { $('placa').textContent = C.placa; $('placa').hidden = false; } else { $('placa').hidden = true; }
+  $('veic').textContent = C.veiculo || '';
+  mom = C.padrao || (C.momentos[0] && C.momentos[0].k);
+  momentos();
+  var salvo = parseInt(ler(guarda) || '0', 10), achou = null;
+  (C.equipe || []).forEach(function(e){ if (e.id === salvo) achou = e; });
+  if (!(C.equipe || []).length) escolher(null);
+  else if (achou) escolher(achou);
+  else telaQuem();
+  ligado(true);
+  agendarPing();
+}
+function iniciar(){
+  if (!NUVEM) { C = JSON.parse($('cfg').textContent); comecar(); return; }
+  var m = /[#&]c=([A-Za-z0-9_-]{16,64})/.exec(location.hash || '');
+  if (m) {
+    tok = m[1];
+    try { sessionStorage.setItem('swws_c', tok); } catch(e){}
+    try { history.replaceState(null, '', location.pathname + location.search); } catch(e){}
+  } else {
+    try { tok = sessionStorage.getItem('swws_c') || ''; } catch(e){ tok = ''; }
+  }
+  if (!tok) { vencer('Abra esta página pelo QR do computador da oficina.'); return; }
+  $('carregando').hidden = false;
+  rpc('swws_fotos_info', {p_cel: tok}, function(st, r){
+    if (st === 200 && r.ok) { $('carregando').hidden = true; C = r.info; pendentes = r.pendentes || []; comecar(); }
+    else if (st === 200 && r.erro === 'vencido') { $('carregando').hidden = true; vencer(); }
+    else { $('estado').textContent = 'Sem internet. Tentando de novo…'; $('rodape').className = 'off'; setTimeout(iniciar, 4000); }
+  });
+}
+
+/* ------------------------------------------------------------ nome e momento */
+function telaQuem(){
+  $('quem').hidden = false; $('fotos').hidden = true;
+  var box = $('nomes'); box.innerHTML = '';
+  C.equipe.forEach(function(e, i){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'nome';
+    var s = document.createElement('span'); s.textContent = String(i + 1);
+    b.appendChild(s); b.appendChild(document.createTextNode(e.nome));
+    b.onclick = function(){ escolher(e); };
+    box.appendChild(b);
+  });
+}
+function escolher(e){
+  mec = e ? e.id : 0; mecNome = e ? e.nome : '';
+  if (e) gravar(guarda, String(e.id));
+  $('quem').hidden = true; $('fotos').hidden = false;
+  $('linhaQuem').hidden = !e; $('mecNome').textContent = mecNome;
+}
+$('trocar').onclick = telaQuem;
+
+function momentos(){
+  var box = $('moms'); box.innerHTML = '';
+  C.momentos.forEach(function(m){
+    var b = document.createElement('button'); b.type = 'button';
+    b.className = 'mom' + (m.k === mom ? ' sel' : ''); b.textContent = m.n;
+    b.setAttribute('aria-pressed', m.k === mom ? 'true' : 'false');
+    b.onclick = function(){ mom = m.k; momentos(); };
+    box.appendChild(b);
+  });
+}
+function nomeMom(k){ for (var i = 0; i < C.momentos.length; i++) if (C.momentos[i].k === k) return C.momentos[i].n; return k; }
+
+/* ------------------------------------------------------------ foto: reduz no celular */
+function reduzir(file){
+  return new Promise(function(ok){
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      try {
+        var w = img.naturalWidth, h = img.naturalHeight, f = Math.min(1, LADO / Math.max(w, h));
+        var c = document.createElement('canvas'); c.width = Math.round(w * f); c.height = Math.round(h * f);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(b){
+          if (b && b.size > 0) ok({blob: b, nome: 'celular.jpg', ver: true});
+          else ok({blob: file, nome: file.name || 'foto.jpg', ver: false});
+        }, 'image/jpeg', NUVEM ? 0.85 : 0.86);
+      } catch(e) { URL.revokeObjectURL(url); ok({blob: file, nome: file.name || 'foto.jpg', ver: false}); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); ok({blob: file, nome: file.name || 'foto.heic', ver: false}); };
+    img.src = url;
+  });
+}
+
+function novas(files){
+  if (vencido || !files || !files.length) return;
+  var leg = $('leg').value.trim(); $('leg').value = '';
+  Array.prototype.forEach.call(files, function(f){
+    var it = {n: ++cont, mom: mom, leg: leg, estado: 'prep', pct: 0}; leg = '';
+    fila.unshift(it); desenhar();
+    reduzir(f).then(function(r){
+      it.blob = r.blob; it.nome = r.nome; it.kb = Math.round(r.blob.size / 1024);
+      if (r.ver) it.thumb = URL.createObjectURL(r.blob);
+      it.estado = 'fila'; desenhar(); proximo();
+    });
+  });
+}
+$('cam').onchange = function(){ novas(this.files); this.value = ''; };
+$('gal').onchange = function(){ novas(this.files); this.value = ''; };
+
+/* ------------------------------------------------------------ envio (uma de cada vez) */
+function proximo(){
+  if (enviando || vencido) return;
+  var it = null;
+  for (var i = fila.length - 1; i >= 0; i--) if (fila[i].estado === 'fila') { it = fila[i]; break; }
+  if (!it) return;
+  enviando = true; it.estado = 'env'; desenhar();
+  if (NUVEM) enviarNuvem(it); else enviarLocal(it);
+}
+function semSinal(it){ enviando = false; it.estado = 'fila'; ligado(false); desenhar(); setTimeout(proximo, 4000); }
+function recusada(it, msg){ enviando = false; it.estado = 'erro'; it.msg = msg || 'Não foi aceita.'; desenhar(); proximo(); }
+
+function enviarLocal(it){
+  it.pct = 0;
+  var x = new XMLHttpRequest();
+  var q = '?mom=' + encodeURIComponent(it.mom) + '&mec=' + mec + '&leg=' + encodeURIComponent(it.leg) +
+          '&nome=' + encodeURIComponent(it.nome);
+  x.open('POST', base + '/foto' + q, true);
+  x.timeout = 180000;
+  x.setRequestHeader('Content-Type', 'application/octet-stream');
+  x.upload.onprogress = function(e){ if (e.lengthComputable) { it.pct = Math.round(e.loaded * 100 / e.total); desenhar(); } };
+  x.onload = function(){
+    var r = {}; try { r = JSON.parse(x.responseText || '{}'); } catch(e){}
+    if (x.status === 200 && r.ok) { enviando = false; it.estado = 'ok'; it.hora = r.hora || hora(); it.blob = null; ligado(true); desenhar(); proximo(); }
+    else if (x.status === 410 || r.vencido) { enviando = false; it.estado = 'fila'; vencer(); desenhar(); }
+    else if (x.status >= 400 && x.status < 500) recusada(it, r.msg);
+    else semSinal(it);
+  };
+  x.onerror = x.ontimeout = function(){ semSinal(it); };
+  x.send(it.blob);
+}
+
+var MSG = {momento: 'Momento inválido.', nome: 'Escolha o seu nome de novo.', limite: 'Limite de fotos deste documento.',
+           tamanho: 'Foto grande demais.', foto: 'Não foi aceita. Tire de novo.', parte: 'Não foi aceita. Tire de novo.',
+           dados: 'Não foi aceita. Tire de novo.'};
+function enviarNuvem(it){
+  var partes = Math.max(1, Math.ceil(it.blob.size / TAM));
+  function resposta(st, r, seguir){
+    if (st !== 200) return semSinal(it);
+    if (r.ok) { ligado(true); return seguir(); }
+    if (r.erro === 'vencido') { enviando = false; it.estado = 'fila'; vencer(); desenhar(); return; }
+    if (r.erro === 'cheio') { enviando = false; it.estado = 'fila'; desenhar(); setTimeout(proximo, 8000); return; }
+    if (r.erro === 'foto' || r.erro === 'parte') { it.foto = null; it.parte = 0; }
+    recusada(it, MSG[r.erro]);
+  }
+  function passo(){
+    if (!it.foto) {
+      rpc('swws_fotos_nova', {p_cel: tok, p_mom: it.mom, p_mec: mec, p_leg: it.leg, p_nome: it.nome,
+                              p_partes: partes, p_bytes: it.blob.size},
+          function(st, r){ resposta(st, r, function(){ it.foto = r.foto; it.parte = 0; passo(); }); });
+      return;
+    }
+    if (it.parte >= partes) return feito();
+    var rd = new FileReader();
+    rd.onload = function(){
+      var b64 = String(rd.result).split(',')[1] || '';
+      rpc('swws_fotos_parte', {p_cel: tok, p_foto: it.foto, p_n: it.parte, p_b64: b64}, function(st, r){
+        resposta(st, r, function(){
+          it.parte++; it.pct = Math.round(it.parte * 100 / partes); desenhar();
+          if (r.completa || it.parte >= partes) feito(); else passo();
+        });
+      });
+    };
+    rd.onerror = function(){ recusada(it, 'Não foi possível ler a foto.'); };
+    rd.readAsDataURL(it.blob.slice(it.parte * TAM, (it.parte + 1) * TAM));
+  }
+  function feito(){ enviando = false; it.estado = 'nuvem'; it.blob = null; desenhar(); agendarPing(1500); proximo(); }
+  passo();
+}
+
+/* ------------------------------------------------------------ lista */
+function desenhar(){
+  var box = $('lista'); box.innerHTML = '';
+  var feitas = fila.filter(function(i){ return i.estado === 'ok' || i.estado === 'nuvem'; }).length;
+  $('cont').textContent = fila.length ? ('Enviadas agora (' + feitas + ' de ' + fila.length + ')') : '';
+  fila.forEach(function(it){
+    var d = document.createElement('div'); d.className = 'item';
+    var im;
+    if (it.thumb) { im = document.createElement('img'); im.src = it.thumb; im.alt = ''; }
+    else { im = document.createElement('div'); im.className = 'sem'; }
+    d.appendChild(im);
+    var t = document.createElement('div'); t.className = 'txt';
+    var b = document.createElement('b'); b.textContent = 'Foto ' + it.n + ' · ' + nomeMom(it.mom); t.appendChild(b);
+    var s = document.createElement('div');
+    if (it.estado === 'env') {
+      var br = document.createElement('div'); br.className = 'barra'; var i = document.createElement('i');
+      i.style.width = (it.pct || 0) + '%'; br.appendChild(i); t.appendChild(br);
+      s.className = 'esp'; s.textContent = 'Enviando… ' + (it.pct || 0) + '%' + (it.kb ? ' · ' + it.kb + ' KB' : '');
+    } else if (it.estado === 'ok') { s.className = 'ok'; s.textContent = (C.doc === 'OS' ? '✓ Já está na OS' : '✓ Já está no orçamento') + (it.hora ? ' · ' + it.hora : ''); }
+    else if (it.estado === 'nuvem') { s.className = 'esp'; s.textContent = '✓ Enviada · chegando no computador…'; }
+    else if (it.estado === 'erro') { s.className = 'err'; s.textContent = it.msg; }
+    else if (it.estado === 'prep') { s.className = 'esp'; s.textContent = 'Preparando…'; }
+    else { s.className = 'esp'; s.textContent = vencido ? 'Não enviada' : 'Na fila'; }
+    t.appendChild(s); d.appendChild(t); box.appendChild(d);
+  });
+}
+
+/* ------------------------------------------------------------ conexão */
+function ligado(sim){
+  if (vencido) return;
+  $('rodape').className = sim ? '' : 'off';
+  $('estado').textContent = sim ? (NUVEM ? 'Conectado pela internet' : 'Conectado ao computador da oficina')
+    : (NUVEM ? 'Sem internet. As fotos esperam na fila e seguem sozinhas.'
+             : 'Sem conexão com o computador. As fotos esperam na fila e seguem sozinhas.');
+}
+function vencer(msg){
+  vencido = true; $('vencido').hidden = false; if (msg) $('vencidoTxt').textContent = msg;
+  $('cam').disabled = true; $('gal').disabled = true;
+  $('rodape').className = 'off'; $('estado').textContent = 'Código vencido';
+}
+function agendarPing(ms){
+  if (tPing) clearTimeout(tPing);
+  var esperando = fila.some(function(i){ return i.estado === 'nuvem'; });
+  tPing = setTimeout(ping, ms || (esperando ? 3000 : 10000));
+}
+function ping(){
+  if (vencido) return;
+  if (NUVEM) {
+    rpc('swws_fotos_info', {p_cel: tok}, function(st, r){
+      if (st === 200 && r.ok) {
+        ligado(true); pendentes = r.pendentes || [];
+        var mudou = false;
+        fila.forEach(function(it){
+          if (it.estado === 'nuvem' && pendentes.indexOf(it.foto) < 0) { it.estado = 'ok'; it.hora = hora(); mudou = true; }
+        });
+        if (mudou) desenhar();
+      } else if (st === 200 && r.erro === 'vencido') vencer();
+      else ligado(false);
+      agendarPing();
+    });
+    return;
+  }
+  var x = new XMLHttpRequest(); x.open('GET', base + '/ping', true); x.timeout = 8000;
+  x.onload = function(){ if (x.status === 410) vencer(); else ligado(x.status === 200); agendarPing(); };
+  x.onerror = x.ontimeout = function(){ ligado(false); agendarPing(); };
+  x.send();
+}
+window.addEventListener('beforeunload', function(e){
+  for (var i = 0; i < fila.length; i++) if (fila[i].estado === 'fila' || fila[i].estado === 'env' || fila[i].estado === 'prep') { e.preventDefault(); e.returnValue = ''; return ''; }
+});
+
+iniciar();
+})();
+</script>
+</body></html>
