@@ -114,6 +114,7 @@ main{max-width:1400px;margin:0 auto;padding:20px;display:flex;flex-direction:col
 .gv-tab .pos{color:#1f7a3d}.gv-tab .neg{color:var(--ruim)}
 .gv-tab td small{display:none}
 .gv-nota{color:var(--tinta-3);font-size:12.5px;margin:0}
+.par.fiado{border-top:1px dashed #cfd8da;margin-top:10px;padding-top:10px}.par.fiado b{white-space:nowrap;align-self:center}.par.fiado small{display:block;color:var(--tinta-3);font-size:12px;font-weight:400}
 @media (max-width:820px){
   .gv-corpo{grid-template-columns:1fr;gap:14px}
   .gv-tab .gv-pc{display:none}.gv-tab td small{display:block;color:var(--tinta-3);font-size:12px;font-weight:400;white-space:normal}
@@ -306,19 +307,39 @@ function pizza(itens, total, centro) {
   }
   return `<svg viewBox="0 0 ${t} ${t}" role="img" aria-label="${esc(centro)}">${out}<text x="${r}" y="${r - 6}" text-anchor="middle" font-size="12.5" fill="#52686D">${esc(centro.length > 20 ? centro.slice(0, 19) + "…" : centro)}</text><text x="${r}" y="${r + 16}" text-anchor="middle" font-size="16" font-weight="700" fill="#042D35">${brl(total)}</text></svg>`;
 }
+function juntaCaixas(lista) {          // soma grupos e produtos de vários caixas (mesmo formato de um caixa)
+  const gs = new Map(); let qtd = 0, fat = 0;
+  for (const c of lista) {
+    qtd += n(c.qtd); fat += n(c.fat);
+    for (const g of c.g || []) {
+      const k = String(g[0]); if (!gs.has(k)) gs.set(k, { v: 0, c: 0, its: new Map(), outN: 0, out: [0, 0, 0] });
+      const G = gs.get(k); G.v += n(g[1]); G.c += n(g[2]);
+      for (const x of g[3] || []) {
+        if (x[0] < 0) { G.outN += -x[0]; G.out[0] += n(x[1]); G.out[1] += n(x[2]); G.out[2] += n(x[3]); continue; }
+        const it = G.its.get(x[0]) || [x[0], 0, 0, 0]; it[1] += n(x[1]); it[2] += n(x[2]); it[3] += n(x[3]); G.its.set(x[0], it);
+      }
+    }
+  }
+  const g = [...gs.entries()].map(([k, G]) => [Number(k), G.v, G.c, [...G.its.values()].sort((a, b) => b[2] - a[2]).concat(G.outN ? [[-G.outN, ...G.out]] : [])])
+    .sort((a, b) => b[1] - a[1]);
+  return { qtd, fat, g };
+}
 function gvCartao() {
   const V = D.vendas_grupo;
   if (!V || !Array.isArray(V.periodos)) return "";
   const P = V.produtos || [], G = V.grupos || {}, cxs = V.caixas || [];
-  if (!E.gm || (E.gm === "caixa" && !cxs.length)) E.gm = cxs.length ? "caixa" : "dia";
-  const modos = [["caixa", "Caixa"], ["dia", "Dia"], ["semana", "Semana"], ["quinzena", "Quinzena"], ["mes", "Mês"]].filter(o => o[0] !== "caixa" || cxs.length);
+  if (!E.gm || (E.gm === "caixa" && !cxs.length)) E.gm = "dia";   // painel gerencial: abre com todas as vendas do dia
+  const modos = [["dia", "Dia"], ["semana", "Semana"], ["quinzena", "Quinzena"], ["mes", "Mês"], ["caixa", "Caixa"]].filter(o => o[0] !== "caixa" || cxs.length);
   let X, sub, res;
   if (E.gm === "caixa") {
-    if (!cxs.some(c => c.id === E.gcx)) E.gcx = cxs[0].id;
-    X = cxs.find(c => c.id === E.gcx);
+    const abertos = cxs.filter(c => c.status === "ABERTO");
+    if (E.gcx !== 0 && !cxs.some(c => c.id === E.gcx)) E.gcx = abertos.length ? 0 : cxs[0].id;
+    if (E.gcx === 0 && !abertos.length) E.gcx = cxs[0].id;
+    X = E.gcx === 0 ? juntaCaixas(abertos) : cxs.find(c => c.id === E.gcx);
     const rc = c => `Nº ${c.id} · ${c.equipamento} · ${dBRa(c.abertura).slice(0, 5)} ${c.abertura.slice(11)}` + (c.status === "ABERTO" ? " · ABERTO" : " → " + (c.fechamento.slice(0, 10) === c.abertura.slice(0, 10) ? "" : dBRa(c.fechamento).slice(0, 5) + " ") + c.fechamento.slice(11));
-    sub = `<div class="gv-sub"><select data-gcx aria-label="Caixa">${cxs.map(c => `<option value="${c.id}"${c.id === E.gcx ? " selected" : ""}>${esc(rc(c))}</option>`).join("")}</select></div>`;
-    res = `<b>Caixa nº ${X.id}</b> — ${esc(X.equipamento)} — aberto em ${dBRa(X.abertura)} ${X.abertura.slice(11)} — ` + (X.status === "ABERTO" ? `<span class="ab">ainda aberto</span>` : `fechado em ${dBRa(X.fechamento)} ${X.fechamento.slice(11)}`);
+    sub = `<div class="gv-sub"><select data-gcx aria-label="Caixa">${abertos.length ? `<option value="0"${E.gcx === 0 ? " selected" : ""}>Todos os caixas abertos (${abertos.length})</option>` : ""}${cxs.map(c => `<option value="${c.id}"${c.id === E.gcx ? " selected" : ""}>${esc(rc(c))}</option>`).join("")}</select></div>`;
+    res = E.gcx === 0 ? `<b>Todos os caixas abertos</b> — ${abertos.map(c => `nº ${c.id} (${esc(c.equipamento)}, desde ${c.abertura.slice(11)})`).join(", ")}`
+      : `<b>Caixa nº ${X.id}</b> — ${esc(X.equipamento)} — aberto em ${dBRa(X.abertura)} ${X.abertura.slice(11)} — ` + (X.status === "ABERTO" ? `<span class="ab">ainda aberto</span>` : `fechado em ${dBRa(X.fechamento)} ${X.fechamento.slice(11)}`);
   } else {
     const ps = V.periodos.filter(p => p.k === E.gm);
     if (!ps.length) return "";
@@ -369,7 +390,9 @@ function desenha() {
   if (ant && n(ant.total) > 0) { const d = n(mes.total) / n(ant.total) - 1; delta = `${d >= 0 ? "▲" : "▼"} ${pc(Math.abs(d))} ${d >= 0 ? "acima" : "abaixo"} dos mesmos dias do mês passado`; }
   const fOps = [["hoje", "Hoje", D.formas_hoje], ["mes", "Mês", D.formas_mes], ["ant", "Mês anterior", D.formas_mes_anterior]].filter(o => Array.isArray(o[2]));
   if (!fOps.some(o => o[0] === E.forma)) E.forma = (fOps[0] || ["mes"])[0];
-  const fx = faixas((fOps.find(o => o[0] === E.forma) || [])[2], "forma");
+  const fLista = (fOps.find(o => o[0] === E.forma) || [])[2] || [];
+  const eFiado = x => x.tipo ? x.tipo === "FIADO" : /fiado|a prazo/i.test(x.forma || "");
+  const fx = faixas(fLista.filter(x => !eFiado(x)), "forma"), fiado = fLista.filter(eFiado).reduce((a, x) => a + n(x.valor), 0);
   const pOps = [["7d", "7 dias", D.top_produtos_7d, "Últimos 7 dias"], ["30d", "30 dias", D.top_produtos_30d, "Últimos 30 dias"], ["12m", "12 meses", D.top_produtos_12m, "Últimos 12 meses"]].filter(o => Array.isArray(o[2]));
   if (!pOps.length) pOps.push(["mes", "Mês", D.top_produtos_mes || [], "Neste mês"]);
   if (!pOps.some(o => o[0] === E.prod)) E.prod = pOps[0][0];
@@ -385,7 +408,7 @@ function desenha() {
     <span>${QUANDO ? "Atualizado " + (QUANDO.toDateString() === AGORA.toDateString() ? "hoje às " + hm(QUANDO) : "em " + dm(QUANDO) + " às " + hm(QUANDO)) : ""} · esta página atualiza sozinha</span></div></div>
   ${minutos != null && minutos > 45 ? `<div class="aviso" data-aba="resumo vendas pag prod fin">Os totais não chegam há ${minutos >= 120 ? Math.round(minutos / 60) + " horas" : minutos + " minutos"}. O servidor da loja pode estar desligado ou sem internet; os números abaixo são os do último envio.</div>` : ""}
   <section class="kpis" data-aba="resumo" aria-label="Indicadores">
-    ${kpi("Vendas hoje", brl(hoje.total), qt(hoje.qtd) + " venda(s)")}
+    ${kpi("Vendas hoje", brl(hoje.total), qt(hoje.qtd) + " venda(s)" + (n(D.caixas_abertos) > 1 ? ` · todos os ${qt(D.caixas_abertos)} caixas` : ""))}
     ${kpi("Vendas no mês", brl(mes.total), delta || qt(mes.qtd) + " venda(s)")}
     ${kpi("Ticket médio no mês", brl(mes.ticket), qt(mes.qtd) + " venda(s) no mês")}
     ${kpi("Lucro bruto no mês", brl(mes.lucro_bruto), n(mes.total) ? "Margem de " + pc(n(mes.lucro_bruto) / n(mes.total)) : "—")}
@@ -405,7 +428,8 @@ function desenha() {
       <div class="par"><span>Total do período</span><b class="num">${brl(soma)}</b></div>
       <span class="dica">Toque em uma barra para ver o valor daquele período. A barra dourada é a selecionada.</span></section>
     <section class="card g1" data-aba="pag"><div class="ch"><h2>Formas de pagamento</h2>${fOps.length > 1 ? seg("forma", fOps, E.forma) : ""}</div>
-      <div class="par"><span>Total recebido no período</span><b class="num">${brl(fx.tot)}</b></div>${fx.html}</section>
+      <div class="par"><span>Total recebido no período</span><b class="num">${brl(fx.tot)}</b></div>${fx.html}
+      ${fiado > 0 ? `<div class="par fiado"><span>Vendido a prazo (fiado)<small>ainda não recebido · vai para Contas a receber</small></span><b class="num">${brl(fiado)}</b></div>` : ""}</section>
   </div>
   <div class="linha">
     <section class="card g3" data-aba="prod"><div class="ch"><div><h2>10 produtos mais vendidos</h2><small>${pAt[3]}</small></div>${pOps.length > 1 ? seg("prod", pOps, E.prod) : ""}</div>
