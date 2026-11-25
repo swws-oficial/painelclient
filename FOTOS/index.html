@@ -42,6 +42,18 @@ input[type=text]{width:100%;min-height:46px;padding:0 12px;background:#072C33;co
 .esp{color:#B9CBCA;font-size:13px}
 .err{color:#FFB4A8;font-size:13px}
 .aviso{background:#5A1F1A;border:1px solid #C9705F;border-radius:10px;padding:14px;margin-bottom:14px}
+.sair{display:block;width:100%;min-height:54px;margin-top:26px;background:transparent;color:#8FE0A6;border:1px solid #4E9F6B;border-radius:10px;font-size:17px;font-weight:700}
+.conf{position:fixed;left:0;right:0;bottom:0;background:#0A3A43;border-top:2px solid #C9A44C;padding:18px 18px 24px;box-shadow:0 -8px 24px rgba(0,0,0,.4)}
+.conf .lado{display:flex;gap:10px;margin-top:12px}
+.conf button{flex:1;min-height:52px;border-radius:10px;font-size:17px;font-weight:700}
+.conf .sim{background:#C9A44C;color:#042D35;border:0}
+.conf .nao{background:transparent;color:#E2C77E;border:1px solid #2A5961}
+.conf .sim[disabled]{opacity:.5}
+.docs{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.doc{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:58px;padding:10px 16px;background:#0A3A43;color:#F4F1EC;border:1px solid #2A5961;border-radius:10px;font-size:16px;font-weight:600;text-align:left;width:100%}
+.doc small{color:#B9CBCA;font-weight:400;font-size:14px}
+.doc.atual{border-color:#C9A44C}
+.topo{display:flex;justify-content:space-between;align-items:center;gap:8px}
 footer{padding:12px 18px 18px;border-top:1px solid #2A5961;font-size:13px;color:#B9CBCA;display:flex;align-items:center;gap:8px}
 footer i{width:9px;height:9px;border-radius:5px;background:#6FD08C;flex:none}
 footer.off i{background:#E0A050}
@@ -49,13 +61,24 @@ footer.off i{background:#E0A050}
 </style></head>
 <body>
 <header>
-  <div class="marca">S.W.W.S</div>
+  <div class="topo"><div class="marca">S.W.W.S</div><button type="button" class="link" id="outros" hidden></button></div>
   <h1 id="titulo"></h1>
   <div class="veic"><span class="placa" id="placa" hidden></span><span id="veic"></span></div>
 </header>
 <main>
-  <div class="aviso" id="vencido" hidden><b>Este código não vale mais.</b><br><span id="vencidoTxt">O documento foi
-    fechado no computador. Abra de novo e gere outro QR em «Fotos pelo celular».</span></div>
+  <div class="aviso" id="vencido" hidden><b>Este celular não está mais vinculado a este documento.</b><br><span id="vencidoTxt">O
+    documento terminou ou foi desvinculado no computador. Para mandar mais fotos, leia o QR de novo em «Vincular celular».</span></div>
+  <section id="listaDocs" hidden>
+    <h2>Meus documentos</h2>
+    <p class="fraco">Documentos a que este celular está vinculado.</p>
+    <div class="docs" id="docs"></div>
+    <button type="button" class="link" id="docsVoltar">voltar</button>
+  </section>
+  <section id="fim" hidden>
+    <h2>Pronto<span id="fimNome"></span>!</h2>
+    <p id="fimTxt"></p>
+    <p class="fraco">Este celular não está mais vinculado. Pode fechar esta página.</p>
+  </section>
   <p class="fraco" id="carregando" hidden>Abrindo…</p>
   <section id="quem" hidden>
     <h2>Quem está tirando as fotos?</h2>
@@ -74,7 +97,14 @@ footer.off i{background:#E0A050}
       <input type="text" id="leg" maxlength="200" placeholder="Ex.: vazamento no cárter" autocomplete="off"></label>
     <div class="rot" id="cont" style="margin-top:18px"></div>
     <div class="lista" id="lista"></div>
+    <button type="button" class="sair" id="terminei">✓ Terminei — sair</button>
   </section>
+  <div class="conf" id="conf" hidden role="dialog" aria-labelledby="confTit">
+    <b id="confTit">Terminar e sair?</b>
+    <p class="fraco" id="confTxt" style="margin-top:6px"></p>
+    <p class="err" id="confErro" hidden>Sem conexão agora. Tente de novo.</p>
+    <div class="lado"><button type="button" class="nao" id="confNao">Voltar</button><button type="button" class="sim" id="confSim">Terminar</button></div>
+  </div>
 </main>
 <footer id="rodape"><i></i><span id="estado"></span></footer>
 <script>window.SWWS = {"modo": "nuvem", "api": "https://zfupbpazebjzxglthzfl.supabase.co", "key": "sb_publishable_Llz1O388RBu73goHRY5GLA_bxG6A2_H"};</script>
@@ -85,14 +115,50 @@ var NUVEM = W.modo === 'nuvem';
 var $ = function(id){ return document.getElementById(id); };
 var C = null, tok = '', base = location.pathname.replace(/\/+$/, '');
 var mec = 0, mecNome = '', mom = '', vencido = false, enviando = false, cont = 0, fila = [];
-var pendentes = null, tPing = null;
+var pendentes = null, tPing = null, terminou = false, INFO_MEC = true;
 var guarda = 'swws_mec';
+var DOCS = 'swws_docs';              /* 1.9.53: os documentos a que este celular está vinculado */
 var TAM = 270000;                    /* pedaço da foto pela internet (bytes) */
 var LADO = NUVEM ? 1600 : 2048;      /* a foto é reduzida no celular */
 
 function ler(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function gravar(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
 function hora(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+
+/* ------------------------------------------------------------ 1.9.53: documentos vinculados neste celular */
+function docs(){ try { var l = JSON.parse(ler(DOCS) || '[]'); return Array.isArray(l) ? l : []; } catch(e){ return []; } }
+function chaveDoc(){ return NUVEM ? tok : location.pathname; }
+function lembrarDoc(){
+  var k = chaveDoc(), l = docs().filter(function(d){ return d.k !== k; });
+  l.unshift({k: k, t: C.titulo || 'Documento', p: C.placa || '', v: C.veiculo || ''});
+  gravar(DOCS, JSON.stringify(l.slice(0, 12))); botaoDocs();
+}
+function esquecerDoc(){
+  var k = chaveDoc(); gravar(DOCS, JSON.stringify(docs().filter(function(d){ return d.k !== k; }))); botaoDocs();
+}
+function botaoDocs(){
+  var n = docs().length, b = $('outros');
+  if (!b) return;
+  b.hidden = n < 2 && !(n === 1 && (vencido || terminou));
+  b.textContent = 'Meus documentos (' + n + ')';
+}
+function telaDocs(){
+  var l = docs(), box = $('docs'); box.innerHTML = '';
+  $('listaDocs').hidden = false; $('quem').hidden = true; $('fotos').hidden = true; $('fim').hidden = true; $('vencido').hidden = true;
+  if (!l.length) { var p = document.createElement('p'); p.className = 'fraco'; p.textContent = 'Nenhum documento vinculado. Leia o QR no computador da oficina.'; box.appendChild(p); }
+  l.forEach(function(d){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'doc' + (d.k === chaveDoc() && !vencido && !terminou ? ' atual' : '');
+    b.appendChild(document.createTextNode(d.t));
+    var sm = document.createElement('small'); sm.textContent = [d.p, d.v].filter(Boolean).join(' · '); b.appendChild(sm);
+    b.onclick = function(){ abrirDoc(d); };
+    box.appendChild(b);
+  });
+}
+function abrirDoc(d){
+  if (!NUVEM) { if (d.k !== location.pathname) location.href = d.k; else location.reload(); return; }
+  try { sessionStorage.setItem('swws_c', d.k); } catch(e){}
+  location.reload();
+}
 
 /* ------------------------------------------------------------ internet: chamada à nuvem */
 function rpc(fn, corpo, cb){
@@ -105,6 +171,16 @@ function rpc(fn, corpo, cb){
   x.onload = function(){ var r = {}; try { r = JSON.parse(x.responseText || '{}'); } catch(e){} cb(x.status, r || {}); };
   x.onerror = x.ontimeout = function(){ cb(0, {}); };
   x.send(JSON.stringify(corpo));
+}
+
+/* sinal do celular + quem está com ele (1.9.53); nuvem antiga (sem p_mec): manda só o código */
+function info(cb){
+  var corpo = {p_cel: tok};
+  if (INFO_MEC && mec) corpo.p_mec = mec;
+  rpc('swws_fotos_info', corpo, function(st, r){
+    if ((st === 404 || st === 400) && corpo.p_mec) { INFO_MEC = false; return info(cb); }
+    cb(st, r);
+  });
 }
 
 /* ------------------------------------------------------------ início */
@@ -120,6 +196,7 @@ function comecar(){
   else if (achou) escolher(achou);
   else telaQuem();
   ligado(true);
+  lembrarDoc();
   agendarPing();
 }
 function iniciar(){
@@ -132,11 +209,16 @@ function iniciar(){
   } else {
     try { tok = sessionStorage.getItem('swws_c') || ''; } catch(e){ tok = ''; }
   }
+  if (!tok) {
+    var l = docs();
+    if (l.length === 1) tok = l[0].k;
+    else if (l.length > 1) { telaDocs(); return; }
+  }
   if (!tok) { vencer('Abra esta página pelo QR do computador da oficina.'); return; }
   $('carregando').hidden = false;
-  rpc('swws_fotos_info', {p_cel: tok}, function(st, r){
+  info(function(st, r){
     if (st === 200 && r.ok) { $('carregando').hidden = true; C = r.info; pendentes = r.pendentes || []; comecar(); }
-    else if (st === 200 && r.erro === 'vencido') { $('carregando').hidden = true; vencer(); }
+    else if (st === 200 && (r.erro === 'vencido' || r.erro === 'terminada')) { $('carregando').hidden = true; esquecerDoc(); vencer(); }
     else { $('estado').textContent = 'Sem internet. Tentando de novo…'; $('rodape').className = 'off'; setTimeout(iniciar, 4000); }
   });
 }
@@ -158,6 +240,7 @@ function escolher(e){
   if (e) gravar(guarda, String(e.id));
   $('quem').hidden = true; $('fotos').hidden = false;
   $('linhaQuem').hidden = !e; $('mecNome').textContent = mecNome;
+  if (C) agendarPing(300);           /* o computador já fica sabendo quem está com o celular */
 }
 $('trocar').onclick = telaQuem;
 
@@ -234,7 +317,7 @@ function enviarLocal(it){
   x.onload = function(){
     var r = {}; try { r = JSON.parse(x.responseText || '{}'); } catch(e){}
     if (x.status === 200 && r.ok) { enviando = false; it.estado = 'ok'; it.hora = r.hora || hora(); it.blob = null; ligado(true); desenhar(); proximo(); }
-    else if (x.status === 410 || r.vencido) { enviando = false; it.estado = 'fila'; vencer(); desenhar(); }
+    else if (x.status === 410 || r.vencido) { enviando = false; it.estado = 'fila'; esquecerDoc(); vencer(); desenhar(); }
     else if (x.status >= 400 && x.status < 500) recusada(it, r.msg);
     else semSinal(it);
   };
@@ -250,7 +333,7 @@ function enviarNuvem(it){
   function resposta(st, r, seguir){
     if (st !== 200) return semSinal(it);
     if (r.ok) { ligado(true); return seguir(); }
-    if (r.erro === 'vencido') { enviando = false; it.estado = 'fila'; vencer(); desenhar(); return; }
+    if (r.erro === 'vencido' || r.erro === 'terminada') { enviando = false; it.estado = 'fila'; esquecerDoc(); vencer(); desenhar(); return; }
     if (r.erro === 'cheio') { enviando = false; it.estado = 'fila'; desenhar(); setTimeout(proximo, 8000); return; }
     if (r.erro === 'foto' || r.erro === 'parte') { it.foto = null; it.parte = 0; }
     recusada(it, MSG[r.erro]);
@@ -317,6 +400,7 @@ function ligado(sim){
 }
 function vencer(msg){
   vencido = true; $('vencido').hidden = false; if (msg) $('vencidoTxt').textContent = msg;
+  $('terminei').hidden = true; botaoDocs();
   $('cam').disabled = true; $('gal').disabled = true;
   $('rodape').className = 'off'; $('estado').textContent = 'Código vencido';
 }
@@ -326,9 +410,9 @@ function agendarPing(ms){
   tPing = setTimeout(ping, ms || (esperando ? 3000 : 10000));
 }
 function ping(){
-  if (vencido) return;
+  if (vencido || terminou) return;
   if (NUVEM) {
-    rpc('swws_fotos_info', {p_cel: tok}, function(st, r){
+    info(function(st, r){
       if (st === 200 && r.ok) {
         ligado(true); pendentes = r.pendentes || [];
         var mudou = false;
@@ -336,17 +420,65 @@ function ping(){
           if (it.estado === 'nuvem' && pendentes.indexOf(it.foto) < 0) { it.estado = 'ok'; it.hora = hora(); mudou = true; }
         });
         if (mudou) desenhar();
-      } else if (st === 200 && r.erro === 'vencido') vencer();
+      } else if (st === 200 && (r.erro === 'vencido' || r.erro === 'terminada')) { esquecerDoc(); vencer(); }
       else ligado(false);
       agendarPing();
     });
     return;
   }
-  var x = new XMLHttpRequest(); x.open('GET', base + '/ping', true); x.timeout = 8000;
-  x.onload = function(){ if (x.status === 410) vencer(); else ligado(x.status === 200); agendarPing(); };
+  var x = new XMLHttpRequest(); x.open('GET', base + '/ping' + (mec ? '?mec=' + mec : ''), true); x.timeout = 8000;
+  x.onload = function(){ if (x.status === 410) { esquecerDoc(); vencer(); } else ligado(x.status === 200); agendarPing(); };
   x.onerror = x.ontimeout = function(){ ligado(false); agendarPing(); };
   x.send();
 }
+/* ------------------------------------------------------------ 1.9.53: «Terminei» */
+function faltam(){ return fila.filter(function(i){ return i.estado === 'fila' || i.estado === 'env' || i.estado === 'prep'; }).length; }
+var tConf = null;
+function confAtualizar(){
+  var n = faltam();
+  $('confSim').disabled = n > 0;
+  $('confTxt').textContent = n > 0 ? ('Espere ' + (n === 1 ? 'a foto terminar' : 'as ' + n + ' fotos terminarem') + ' de enviar…')
+    : 'Este celular deixa de estar vinculado a ' + (C.titulo || 'este documento') + '. As fotos enviadas ficam no documento.';
+  if ($('conf').hidden) return;
+  tConf = setTimeout(confAtualizar, 800);
+}
+$('terminei').onclick = function(){ $('conf').hidden = false; $('confErro').hidden = true; confAtualizar(); };
+$('confNao').onclick = function(){ $('conf').hidden = true; if (tConf) clearTimeout(tConf); };
+$('confSim').onclick = function(){
+  if (faltam()) return;
+  $('confSim').disabled = true; $('confErro').hidden = true;
+  function pronto(){
+    terminou = true; esquecerDoc(); if (tPing) clearTimeout(tPing);
+    $('conf').hidden = true; $('fotos').hidden = true; $('fim').hidden = false;
+    var feitas = fila.filter(function(i){ return i.estado === 'ok' || i.estado === 'nuvem'; }).length;
+    $('fimNome').textContent = mecNome ? ', ' + mecNome : '';
+    $('fimTxt').textContent = feitas ? (feitas + (feitas === 1 ? ' foto enviada' : ' fotos enviadas') + ' para ' + (C.titulo || 'o documento') + '.')
+      : 'Nenhuma foto enviada agora.';
+    $('rodape').className = 'off'; $('estado').textContent = 'Celular desvinculado';
+    botaoDocs();
+  }
+  function falhou(){ $('confSim').disabled = false; $('confErro').hidden = false; }
+  if (NUVEM) {
+    var corpo = {p_cel: tok}; if (mec) corpo.p_mec = mec;
+    rpc('swws_fotos_terminar', corpo, function(st, r){
+      if (st === 200 && (r.ok || r.erro === 'vencido')) pronto(); else falhou();
+    });
+    return;
+  }
+  var x = new XMLHttpRequest(); x.open('POST', base + '/fim' + (mec ? '?mec=' + mec : ''), true); x.timeout = 15000;
+  x.onload = function(){ if (x.status === 200 || x.status === 410) pronto(); else falhou(); };
+  x.onerror = x.ontimeout = falhou;
+  x.send();
+};
+$('outros').onclick = telaDocs;
+$('docsVoltar').onclick = function(){
+  $('listaDocs').hidden = true;
+  if (terminou) $('fim').hidden = false;
+  else if (vencido) $('vencido').hidden = false;
+  else if (C) $('fotos').hidden = false;
+  else location.reload();
+};
+
 window.addEventListener('beforeunload', function(e){
   for (var i = 0; i < fila.length; i++) if (fila[i].estado === 'fila' || fila[i].estado === 'env' || fila[i].estado === 'prep') { e.preventDefault(); e.returnValue = ''; return ''; }
 });
